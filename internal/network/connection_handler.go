@@ -12,14 +12,7 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func connectionHandler(connection net.Conn) error {
-	defer func(connection net.Conn) {
-		err := connection.Close()
-		if err != nil {
-			log.Debug(`error closing connection.`, `error`, err.Error())
-		}
-	}(connection)
-
+func handleConnection(connection net.Conn) error {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Error(`caught panic.`, `error`, err)
@@ -56,8 +49,36 @@ func connectionHandler(connection net.Conn) error {
 	// at this point client and server both have trusted arbiter and can communicate via aes encrypted messages
 	_, err = connection.Write(helpers.ByteArrayModification(encryptedKey, "\n"))
 
+	go func() {
+		err := handleEcho(connection, arbiter)
+		if err != nil {
+			log.Fatal(`error while processing echo.`, `error`, err.Error())
+		}
+	}()
+
+	return nil
+}
+
+func handleEcho(connection net.Conn, arbiter *encryption.Arbiter) error {
+	defer func(connection net.Conn) {
+		err := connection.Close()
+		if err != nil {
+			log.Debug(`error closing connection.`, `error`, err.Error())
+		}
+	}(connection)
+
 	for {
-		message, _ := bufio.NewReader(connection).ReadBytes('\n')
+		message, err := bufio.NewReader(connection).ReadBytes('\n')
+
+		if err != nil {
+			log.Error(`error while reading message`)
+
+			return err
+		}
+
+		if len(message) == 0 {
+			continue
+		}
 
 		message, err = arbiter.Decrypt(helpers.TrimByteArray(message))
 

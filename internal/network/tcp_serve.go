@@ -11,11 +11,14 @@ func ListenerHandler(netListener net.Listener) {
 	}(netListener)
 	for {
 		connection, _ := netListener.Accept()
+
+		log.Info(`client connected.`, `client`, connection.RemoteAddr())
+
 		go func() {
-			err := connectionHandler(connection)
+			err := handleConnection(connection)
 
 			if err != nil {
-				log.Error(`error while handling connection: `, err.Error())
+				log.Error(`error while handling connection.`, `error`, err.Error())
 			}
 		}()
 	}

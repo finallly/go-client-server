@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net"
 	"os"
+	"time"
 
 	"github.com/finallly/go-client-server/internal/encryption"
 	"github.com/finallly/go-client-server/pkg/helpers"
@@ -14,6 +15,12 @@ import (
 )
 
 func StartClientConnection() error {
+	logger := log.NewWithOptions(os.Stderr, log.Options{
+		ReportCaller:    true,
+		ReportTimestamp: true,
+		TimeFormat:      time.Kitchen,
+	})
+
 	connection, err := net.Dial("tcp", getAddress())
 
 	if err != nil {
@@ -23,7 +30,7 @@ func StartClientConnection() error {
 	defer func(connection net.Conn) {
 		err := connection.Close()
 		if err != nil {
-			log.Debug(`error closing connection.`, `error`, err.Error())
+			logger.Warn(`error closing connection.`, `error`, err.Error())
 		}
 	}(connection)
 
@@ -73,7 +80,7 @@ func StartClientConnection() error {
 		message, err = arbiter.Encrypt(helpers.TrimByteArray(message))
 
 		if err != nil {
-			log.Error(`error while encrypting message`)
+			logger.Error(`error while encrypting message`)
 
 			return err
 		}
@@ -93,7 +100,7 @@ func StartClientConnection() error {
 		message, err = arbiter.Decrypt(helpers.TrimByteArray(message))
 
 		if err != nil {
-			log.Error(`error while decrypting message`)
+			logger.Error(`error while decrypting message`)
 
 			return err
 		}
