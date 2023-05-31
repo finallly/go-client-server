@@ -1,4 +1,4 @@
-package server_net
+package network
 
 import (
 	"bufio"

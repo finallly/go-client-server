@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/finallly/go-client-server/internal/server_net"
+	"github.com/finallly/go-client-server/internal/network"
 	"github.com/finallly/go-client-server/pkg/parser"
 )
 
@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(`error while creating listening chanel: `, err.Error())
 	}
-	server_net.ListenerHandler(listener)
+	network.ListenerHandler(listener)
 }
 
 func getAddress() string {
