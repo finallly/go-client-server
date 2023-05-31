@@ -46,14 +46,17 @@ func StartClientConnection() error {
 		return err
 	}
 
-	_, err = connection.Write(helpers.ByteArrayModification(publicKeyBytes, "\n"))
+	err = helpers.WriteMessage(connection, publicKeyBytes)
 
 	if err != nil {
 		return err
 	}
 
-	secretKey, _ := bufio.NewReader(connection).ReadBytes('\n')
-	secretKey, err = keyPair.DecryptWithPrivateKey(helpers.TrimByteArray(secretKey))
+	secretKey, err := helpers.ReadMessage(connection)
+	if err != nil {
+		logger.Fatalf("failed to read: %s", err.Error())
+	}
+	secretKey, err = keyPair.DecryptWithPrivateKey(secretKey)
 
 	log.Info(`secret key from server.`, `key`, secretKey)
 
@@ -77,7 +80,7 @@ func StartClientConnection() error {
 			return err
 		}
 
-		message, err = arbiter.Encrypt(helpers.TrimByteArray(message))
+		message, err = arbiter.Encrypt(message[:len(message)-1])
 
 		if err != nil {
 			logger.Error(`error while encrypting message`)
@@ -85,19 +88,18 @@ func StartClientConnection() error {
 			return err
 		}
 
-		_, err = connection.Write(helpers.ByteArrayModification(message, "\n"))
+		err = helpers.WriteMessage(connection, message)
+		if err != nil {
+			return err
+		}
+
+		message, err = helpers.ReadMessage(connection)
 
 		if err != nil {
 			return err
 		}
 
-		message, err = bufio.NewReader(connection).ReadBytes('\n')
-
-		if err != nil {
-			return err
-		}
-
-		message, err = arbiter.Decrypt(helpers.TrimByteArray(message))
+		message, err = arbiter.Decrypt(message)
 
 		if err != nil {
 			logger.Error(`error while decrypting message`)
