@@ -16,13 +16,13 @@ func connectionHandler(connection net.Conn) error {
 	defer func(connection net.Conn) {
 		err := connection.Close()
 		if err != nil {
-			log.Debug(`error closing connection: `, err.Error())
+			log.Debug(`error closing connection.`, `error`, err.Error())
 		}
 	}(connection)
 
 	defer func() {
 		if err := recover(); err != nil {
-			log.Error(`catched panig: `, err)
+			log.Error(`caught panic.`, `error`, err)
 		}
 	}()
 
@@ -39,7 +39,7 @@ func connectionHandler(connection net.Conn) error {
 		return err
 	}
 
-	log.Info(`public key from client: `, *publicKey)
+	log.Info(`public key received from client.`, `key`, *publicKey)
 
 	arbiter, err := encryption.NewArbiter(nil)
 
@@ -59,7 +59,7 @@ func connectionHandler(connection net.Conn) error {
 	for {
 		message, _ := bufio.NewReader(connection).ReadBytes('\n')
 
-		message, err = arbiter.Decrypt(message)
+		message, err = arbiter.Decrypt(helpers.TrimByteArray(message))
 
 		if err != nil {
 			log.Error(`error while decrypting message`)
@@ -67,9 +67,9 @@ func connectionHandler(connection net.Conn) error {
 			return err
 		}
 
-		log.Info(`message received from client: `, string(message))
+		log.Info(`message received from client.`, `message`, string(message))
 
-		message, err = arbiter.Encrypt(message)
+		message, err = arbiter.Encrypt(append(message, []byte(` + server sign`)...))
 
 		if err != nil {
 			log.Error(`error while encrypting message`)
