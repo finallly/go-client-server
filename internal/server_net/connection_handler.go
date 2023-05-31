@@ -29,7 +29,7 @@ func connectionHandler(connection net.Conn) error {
 	clientPublicKey, _ := bufio.NewReader(connection).ReadBytes('\n')
 
 	publicKey := &rsa.PublicKey{}
-	err := json.Unmarshal(clientPublicKey, &publicKey)
+	err := json.Unmarshal(helpers.TrimByteArray(clientPublicKey), &publicKey)
 
 	keyPair := &encryption.KeyPair{
 		Public: publicKey,

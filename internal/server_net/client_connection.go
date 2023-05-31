@@ -46,7 +46,7 @@ func StartClientConnection() error {
 	}
 
 	secretKey, _ := bufio.NewReader(connection).ReadBytes('\n')
-	secretKey, err = keyPair.DecryptWithPrivateKey(secretKey)
+	secretKey, err = keyPair.DecryptWithPrivateKey(helpers.TrimByteArray(secretKey))
 
 	log.Info(`secret key from server: `, secretKey)
 
@@ -71,6 +71,9 @@ func StartClientConnection() error {
 		}
 
 		message, err = arbiter.Encrypt(message)
+		asd, _ := arbiter.Decrypt(message)
+
+		log.Info(`decrypt message: `, string(asd))
 
 		if err != nil {
 			log.Error(`error while encrypting message`)
@@ -84,7 +87,11 @@ func StartClientConnection() error {
 			return err
 		}
 
-		message, _ = bufio.NewReader(connection).ReadBytes('\n')
+		message, err = bufio.NewReader(connection).ReadBytes('\n')
+
+		if err != nil {
+			return err
+		}
 
 		message, err = arbiter.Decrypt(message)
 
