@@ -1,7 +1,6 @@
 package network
 
 import (
-	"bufio"
 	"crypto/rsa"
 	"encoding/json"
 	"net"
@@ -19,10 +18,10 @@ func handleConnection(connection net.Conn) error {
 		}
 	}()
 
-	clientPublicKey, _ := bufio.NewReader(connection).ReadBytes('\n')
+	clientPublicKey, _ := helpers.ReadMessage(connection)
 
 	publicKey := &rsa.PublicKey{}
-	err := json.Unmarshal(helpers.TrimByteArray(clientPublicKey), &publicKey)
+	err := json.Unmarshal(clientPublicKey, &publicKey)
 
 	keyPair := &encryption.KeyPair{
 		Public: publicKey,
@@ -47,7 +46,9 @@ func handleConnection(connection net.Conn) error {
 	}
 
 	// at this point client and server both have trusted arbiter and can communicate via aes encrypted messages
-	_, err = connection.Write(helpers.ByteArrayModification(encryptedKey, "\n"))
+	if err = helpers.WriteMessage(connection, encryptedKey); err != nil {
+		return err
+	}
 
 	go func() {
 		err := handleEcho(connection, arbiter)
@@ -68,7 +69,7 @@ func handleEcho(connection net.Conn, arbiter *encryption.Arbiter) error {
 	}(connection)
 
 	for {
-		message, err := bufio.NewReader(connection).ReadBytes('\n')
+		message, err := helpers.ReadMessage(connection)
 
 		if err != nil {
 			log.Error(`error while reading message`)
@@ -80,7 +81,7 @@ func handleEcho(connection net.Conn, arbiter *encryption.Arbiter) error {
 			continue
 		}
 
-		message, err = arbiter.Decrypt(helpers.TrimByteArray(message))
+		message, err = arbiter.Decrypt(message)
 
 		if err != nil {
 			log.Error(`error while decrypting message`)
@@ -98,7 +99,7 @@ func handleEcho(connection net.Conn, arbiter *encryption.Arbiter) error {
 			return err
 		}
 
-		_, err = connection.Write(helpers.ByteArrayModification(message, "\n"))
+		err = helpers.WriteMessage(connection, message)
 
 		if err != nil {
 			return err
