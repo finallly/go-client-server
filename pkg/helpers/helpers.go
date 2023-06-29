@@ -4,16 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
-	"strings"
 )
-
-func ByteArrayModification(slc []byte, modification string) []byte {
-	return []byte(string(slc) + modification)
-}
-
-func TrimByteArray(message []byte) []byte {
-	return []byte(strings.Trim(string(message), "\n"))
-}
 
 func WriteMessage(conn net.Conn, message []byte) error {
 	prefix := make([]byte, 4)

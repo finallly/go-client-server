@@ -107,7 +107,7 @@ func StartClientConnection() error {
 			return err
 		}
 
-		log.Info(`message received from client.`, `message`, string(message))
+		log.Info(`message received from server.`, `message`, string(message))
 	}
 }
 
