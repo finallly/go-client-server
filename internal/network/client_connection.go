@@ -58,7 +58,7 @@ func StartClientConnection() error {
 	}
 	secretKey, err = keyPair.DecryptWithPrivateKey(secretKey)
 
-	log.Info(`secret key from server.`, `key`, secretKey)
+	log.Info(`secret key from server:`, `key`, secretKey)
 
 	if err != nil {
 		return err
